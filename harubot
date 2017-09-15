@@ -1,0 +1,144 @@
+package Haru.discordbot;
+
+const Discord = require('discord.js');
+        const client = new Discord.Client();
+
+        client.on('ready', () => {
+        console.log('I am ready!');
+        //console.log(client.channels);
+        });
+        lobbies = [];
+        lobbies_time = [];
+        helpstr = "Hey! :eyes: I'm Haru and my job here is to help you find lobbies! Only steam tho\n";
+        helpstr += "Here's what I can do:\n";
+        helpstr += "Haru list or lobby? - Lists all lobbies, capped at 5\n";
+        helpstr += "Haru close n - Closes lobby n, with where n is a number between 1-5, ex. Haru close 3 would close lobby 3 in the lobby list.\n";
+        helpstr += "Haru question - A fortune telling command, use at your own risk my fortunes always come true. ex. Haru question, will I win EVO?  Like a magic 8 ball, ask yes or no questions.\n\n";
+        helpstr += "Note my commands only work for Steam.\n";
+        helpstr += "I will keep track of any steam:// style lobby postings, so I'm very easy to use, and I won't list duplicates.\n";
+        helpstr += "If there's any problems or you have suggestions, message Harutuna.";
+
+        var s = {                                                                  // structure
+        //year: 31536000,
+        //month: 2592000,
+        //week: 604800, // uncomment row to ignore
+        //day: 86400,   // feel free to add your own row
+        hour: 3600,
+        minute: 60,
+        //second: 1
+        };
+        function get_time_since(date){
+        var date_now = new Date().getTime();
+        var d = Math.abs(date - date_now) / 1000;                           // delta
+        var r = {};                                                                // result
+        Object.keys(s).forEach(function(key){
+        r[key] = Math.floor(d / s[key]);
+        d -= r[key] * s[key];
+        });
+
+        // for example: {year:0,month:0,week:1,day:2,hour:34,minute:56,second:7}
+        //console.log(r);
+        if(r.hour>0){
+        return r.hour + "h " + r.minute + "m ago :clock:";
+        }
+        else {
+        return r.minute + "m ago :clock:";
+        }
+        }
+
+        steam_re = /(steam:\/\/[^ ]+)/;
+        client.on('message', message => {
+        if(message.author.bot
+        //|| (message.channel.name != "test" && message.channel.name != "new-player-lounge")
+        ){
+        return;
+        }
+        var match = message.content.match(steam_re);
+        //console.log(match);
+        if(match && match[1]){
+        for(var k in lobbies){
+        if(lobbies[k].indexOf(match[1]) !== -1){
+        message.channel.send('Adding the same lobby twice? Try typing lobby? or Haru list to see a list of lobbies');
+        return;
+        }
+        }
+        lobbies.unshift(message.author.username + ": " + message.content);
+        addmessage = '';
+        if(lobbies.length > 5){
+        addmessage = ' Removed oldest lobby, current lobby limit is set to 3.';
+        }
+        message.channel.send('Steam lobby added, have fun :3'+addmessage+ " For a list of my commands type Haru help");
+        lobbies_time.unshift(new Date().getTime());
+        lobbies.slice(0,5);
+        }
+        else if (message.content.indexOf("lobby?") !== -1 || message.content.indexOf("Haru list") !== -1) {
+        if(lobbies.length>0){
+        lobbystr = '';
+        var count = 1;
+        for(var i in lobbies){
+        timesince = get_time_since(lobbies_time[i]);
+        lobbystr += count+") "+ lobbies[i] + " " + timesince + "\n";
+        count++;
+        }
+        message.channel.send("Here's what I got: \n" + lobbystr);
+        }
+        else {
+        message.channel.send("Everybody is sleeping. Good luck. ");
+        }
+        }
+        else if (message.content.indexOf("Haru close") !== -1) {
+        var found = message.content.match(/Janus close (\d+)/);
+        //console.log(found);
+        if(found && found[1]){
+        var index = found[1] - 1;
+        if(lobbies[index]){
+        lobbies.splice(index,1);
+        message.channel.send("Removed Lobby #"+found[1]+"!")
+        }
+        else message.channel.send("That lobby was not found, so it could not be closed.");
+        }
+        else message.channel.send("Please give a lobby number to close.");
+        //console.log(found);
+        }
+        else if (message.content.indexOf("Haru help") !== -1) {
+        message.author.send(helpstr);
+        }
+        else if (message.content.indexOf("Haru question") !== -1) {
+        f = fortune();
+        message.channel.send(f);
+        }
+        });
+
+        client.login('MzU4MDE4MTgxNTMwMzg2NDMz.DJyf2A.AalXfvdF3THAC6C-Ldjxi9BKgPs');
+
+        function fortune(){
+        var randomNumber = Math.floor(Math.random() * 8);
+        var eightBall = '';
+        switch (randomNumber) {
+        case 0:
+        eightBall = 'Only if I can be your waifu :eyes:';
+        break;
+        case 1:
+        eightBall = 'Yeah no. Sorry bud';
+        break;
+        case 2:
+        eightBall = 'Cannot predict now';
+        break;
+        case 3:
+        eightBall = 'Don\'t count on it';
+        break;
+        case 4:
+        eightBall = 'Try again?';
+        break;
+        case 5:
+        eightBall = 'Outlook not so good';
+        break;
+        case 6:
+        eightBall = 'I believe it\'s so, so it is.;
+        break;
+        case 7:
+        eightBall = '...i\'m just going to ignore that.';
+        break;
+        }
+        return eightBall;
+        }
